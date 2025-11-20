@@ -1,6 +1,65 @@
+// pages/admin/index.tsx
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import api from "../../lib/api";
+import AnimeManager from "../../components/AnimeManager";
+
+// --- Стили для Admin Panel ---
+const styles = {
+  container: {
+    padding: "20px",
+    maxWidth: "1400px",
+    margin: "0 auto",
+    backgroundColor: "#f4f7f9", // Светлый фон
+    minHeight: "100vh",
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "30px",
+    padding: "20px",
+    borderBottom: "2px solid #e0e0e0",
+    backgroundColor: "#ffffff", // Белый фон для шапки
+    borderRadius: "8px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+  },
+  headerTitle: {
+    margin: 0,
+    color: "#333",
+  },
+  userInfo: {
+    display: "flex",
+    alignItems: "center",
+  },
+  avatar: {
+    borderRadius: "50%",
+    width: "40px",
+    height: "40px",
+    marginRight: "15px",
+    border: "2px solid #007bff",
+    objectFit: "cover" as const,
+  },
+  logoutButton: {
+    padding: "8px 15px",
+    backgroundColor: "#dc3545", // Красный для выхода
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    transition: "background-color 0.2s",
+  },
+  loading: {
+    padding: "50px",
+    textAlign: "center" as const,
+    fontSize: "1.5em",
+    color: "#555",
+  },
+};
+// -----------------------------
 
 export default function Admin() {
   const router = useRouter();
@@ -14,19 +73,14 @@ export default function Admin() {
 
   const checkAdmin = async () => {
     try {
-      console.log("🔍 Проверяем права админа...");
       const response = await api.get("/api/admin-check");
-      console.log("✅ Admin check response:", response.data);
-
       if (response.data.is_admin) {
         setIsAdmin(true);
         setUser(response.data.user);
       } else {
-        console.log("❌ Не админ, редирект на login");
         router.push("/login");
       }
     } catch (error: any) {
-      console.error("❌ Ошибка проверки админа:", error);
       router.push("/login");
     } finally {
       setLoading(false);
@@ -36,7 +90,6 @@ export default function Admin() {
   const handleLogout = async () => {
     try {
       await api.post("/api/auth/logout");
-      localStorage.removeItem("token");
       window.location.href = "/login";
     } catch (error) {
       console.error("Ошибка logout:", error);
@@ -45,7 +98,7 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div style={{ padding: "50px", textAlign: "center" }}>
+      <div style={styles.loading}>
         <h2>Загрузка...</h2>
       </div>
     );
@@ -56,46 +109,34 @@ export default function Admin() {
   }
 
   return (
-    <div style={{ padding: "50px" }}>
-      <h1>✅ Админ панель</h1>
-      <p>Добро пожаловать, {user?.name}!</p>
-      <img
-        src={user?.avatar}
-        alt="Avatar"
-        style={{ borderRadius: "50%", width: "100px" }}
-      />
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <div>
+          <h1 style={styles.headerTitle}>✅ Админ панель</h1>
+          <p style={{ margin: 0, color: "#666" }}>
+            Добро пожаловать, {user?.name}!
+          </p>
+        </div>
+        <div style={styles.userInfo}>
+          <img src={user?.avatar} alt="Avatar" style={styles.avatar} />
+          <button
+            onClick={handleLogout}
+            style={styles.logoutButton}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.backgroundColor = "#c82333")
+            }
+            onMouseOut={(e) =>
+              (e.currentTarget.style.backgroundColor = "#dc3545")
+            }
+          >
+            Выйти
+          </button>
+        </div>
+      </header>
 
-      <div style={{ marginTop: "20px" }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Выйти
-        </button>
-      </div>
-
-      <div style={{ marginTop: "30px" }}>
-        <h3>Токен (localStorage):</h3>
-        <code
-          style={{
-            display: "block",
-            padding: "10px",
-            background: "#f5f5f5",
-            wordBreak: "break-all",
-          }}
-        >
-          {typeof window !== "undefined"
-            ? localStorage.getItem("token")
-            : "N/A"}
-        </code>
-      </div>
+      <main>
+        <AnimeManager />
+      </main>
     </div>
   );
 }
